@@ -1,0 +1,322 @@
+import traceback
+import streamlit as st
+from pipeline import run_research_pipeline
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+MAX_TOPIC_LENGTH = 300
+STEPS = [
+    {"key": "search_results",  "label": "Web Search",      "icon": "🔍"},
+    {"key": "scraped_content", "label": "Reader / Scraper", "icon": "📄"},
+    {"key": "report",          "label": "Writer",           "icon": "✍️"},
+    {"key": "feedback",        "label": "Critic",           "icon": "🧐"},
+]
+
+# ---------------------------------------------------------------------------
+# CSS
+# ---------------------------------------------------------------------------
+
+CUSTOM_CSS = """
+<style>
+/* ── Page base ── */
+[data-testid="stAppViewContainer"] { background: #f7f8fc; }
+[data-testid="stSidebar"] { display: none; }
+
+/* ── Step tracker cards ── */
+.step-card {
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    margin-bottom: 4px;
+}
+.step-pending  { background: #e9ecef; color: #868e96; border-color: #dee2e6; }
+.step-active   { background: #fff3cd; color: #856404; border-color: #ffc107;
+                 box-shadow: 0 0 0 3px rgba(255,193,7,0.25); }
+.step-done     { background: #d1e7dd; color: #0a3622; border-color: #86c9a4; }
+
+/* ── Result boxes ── */
+.result-box {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    max-height: 340px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #212529;
+    margin-bottom: 8px;
+}
+.result-empty {
+    color: #adb5bd;
+    font-style: italic;
+    font-family: sans-serif;
+}
+
+/* ── Section headers ── */
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #343a40;
+    margin-bottom: 6px;
+}
+
+/* ── Run button ── */
+div[data-testid="stButton"] > button {
+    background: #4361ee;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.55rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.2s;
+}
+div[data-testid="stButton"] > button:hover { background: #3251d3; }
+
+/* ── Download button ── */
+div[data-testid="stDownloadButton"] > button {
+    background: #2dc653;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.6rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+div[data-testid="stDownloadButton"] > button:hover { background: #24a845; }
+</style>
+"""
+
+# ---------------------------------------------------------------------------
+# Session-state helpers
+# ---------------------------------------------------------------------------
+
+def init_session_state() -> None:
+    """Initialise required session-state keys on first load."""
+    defaults = {
+        "topic": "",
+        "pipeline_state": None,
+        "active_step": -1,
+        "error": None,
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+
+# ---------------------------------------------------------------------------
+# Validation
+# ---------------------------------------------------------------------------
+
+def validate_topic(topic: str) -> str | None:
+    """
+    Validate the research topic.
+    Returns an error string if invalid, else None.
+    """
+    stripped = topic.strip()
+    if not stripped:
+        return "Please enter a research topic before running."
+    if len(stripped) > MAX_TOPIC_LENGTH:
+        return f"Topic is too long (max {MAX_TOPIC_LENGTH} characters)."
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Pipeline runner
+# ---------------------------------------------------------------------------
+
+def execute_pipeline(topic: str) -> None:
+    """
+    Run the research pipeline, storing results in session state.
+    Catches and surfaces any exceptions as friendly messages.
+    """
+    st.session_state.pipeline_state = None
+    st.session_state.error = None
+    st.session_state.active_step = 0
+
+    try:
+        with st.spinner("🔬 Running research pipeline — this may take a minute…"):
+            result = run_research_pipeline(topic)
+        st.session_state.pipeline_state = result
+        st.session_state.active_step = len(STEPS)  # all done
+    except Exception as exc:
+        st.session_state.error = str(exc)
+        st.session_state.active_step = -1
+        traceback.print_exc()
+
+
+# ---------------------------------------------------------------------------
+# UI components
+# ---------------------------------------------------------------------------
+
+def render_step_tracker(pipeline_state: dict | None, active_step: int) -> None:
+    """Render the 4-step progress tracker as colour-coded cards."""
+    cols = st.columns(len(STEPS))
+    for idx, (step, col) in enumerate(zip(STEPS, cols)):
+        if pipeline_state and step["key"] in pipeline_state:
+            css_class = "step-done"
+            status_label = "✔ Done"
+        elif idx == active_step:
+            css_class = "step-active"
+            status_label = "⏳ Running"
+        else:
+            css_class = "step-pending"
+            status_label = "Pending"
+
+        with col:
+            st.markdown(
+                f'<div class="step-card {css_class}">'
+                f'{step["icon"]}<br>{step["label"]}<br>'
+                f'<span style="font-size:0.72rem;font-weight:400">{status_label}</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+
+def render_result_box(title: str, content: str | None, icon: str = "") -> None:
+    """Render a single labelled result box with monospace scrollable content."""
+    st.markdown(f'<div class="section-title">{icon} {title}</div>', unsafe_allow_html=True)
+    if content and content.strip():
+        st.markdown(f'<div class="result-box">{content}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(
+            '<div class="result-box result-empty">No content available for this step.</div>',
+            unsafe_allow_html=True,
+        )
+
+
+def render_results(pipeline_state: dict) -> None:
+    """Render all four step results in a two-column grid."""
+    col_left, col_right = st.columns(2, gap="medium")
+
+    with col_left:
+        render_result_box(
+            "Web Search Results",
+            pipeline_state.get("search_results"),
+            icon="🔍",
+        )
+        render_result_box(
+            "Final Report",
+            pipeline_state.get("report"),
+            icon="✍️",
+        )
+
+    with col_right:
+        render_result_box(
+            "Scraped Content",
+            pipeline_state.get("scraped_content"),
+            icon="📄",
+        )
+        render_result_box(
+            "Critic Feedback",
+            pipeline_state.get("feedback"),
+            icon="🧐",
+        )
+
+
+def render_download_button(topic: str, pipeline_state: dict) -> None:
+    """Show a download button for the final report if available."""
+    report_text = pipeline_state.get("report", "").strip()
+    if not report_text:
+        st.info("No report content to download.")
+        return
+
+    safe_topic = topic.strip().replace(" ", "_")[:60]
+    filename = f"report_{safe_topic}.txt"
+    full_content = (
+        f"Research Topic: {topic}\n"
+        f"{'='*60}\n\n"
+        f"FINAL REPORT\n{'='*60}\n{report_text}\n\n"
+        f"CRITIC FEEDBACK\n{'='*60}\n{pipeline_state.get('feedback', 'N/A')}\n"
+    )
+
+    st.download_button(
+        label="⬇️ Download Report (.txt)",
+        data=full_content.encode("utf-8"),
+        file_name=filename,
+        mime="text/plain",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Main app
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    """Entry point – builds the full Streamlit page."""
+    st.set_page_config(
+        page_title="Research Pipeline",
+        page_icon="🔬",
+        layout="wide",
+    )
+    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    init_session_state()
+
+    # ── Header ──────────────────────────────────────────────────────────────
+    st.title("🔬 AI Research Pipeline")
+    st.caption(
+        "Enter a topic and let the pipeline search, scrape, write, and critique a report for you."
+    )
+    st.divider()
+
+    # ── Input row ───────────────────────────────────────────────────────────
+    input_col, button_col = st.columns([4, 1], gap="small")
+
+    with input_col:
+        topic_input = st.text_input(
+            label="Research Topic",
+            value=st.session_state.topic,
+            placeholder="e.g. Impact of climate change on coastal cities",
+            max_chars=MAX_TOPIC_LENGTH,
+            label_visibility="collapsed",
+        )
+
+    with button_col:
+        run_clicked = st.button("▶ Run", use_container_width=True)
+
+    # ── Validation & execution ───────────────────────────────────────────────
+    if run_clicked:
+        validation_error = validate_topic(topic_input)
+        if validation_error:
+            st.warning(validation_error)
+        else:
+            st.session_state.topic = topic_input.strip()
+            execute_pipeline(st.session_state.topic)
+
+    # ── Error display ────────────────────────────────────────────────────────
+    if st.session_state.error:
+        st.error(
+            f"❌ Pipeline failed: {st.session_state.error}\n\n"
+            "Check your API keys, network connection, and try again."
+        )
+
+    # ── Step tracker ─────────────────────────────────────────────────────────
+    st.subheader("Pipeline Progress")
+    render_step_tracker(st.session_state.pipeline_state, st.session_state.active_step)
+    st.divider()
+
+    # ── Results ──────────────────────────────────────────────────────────────
+    if st.session_state.pipeline_state:
+        st.subheader(f"Results — *{st.session_state.topic}*")
+        render_results(st.session_state.pipeline_state)
+        st.divider()
+
+        render_download_button(st.session_state.topic, st.session_state.pipeline_state)
+
+    elif not st.session_state.error:
+        st.info("Enter a topic above and click **▶ Run** to start the pipeline.")
+
+
+if __name__ == "__main__":
+    main()
