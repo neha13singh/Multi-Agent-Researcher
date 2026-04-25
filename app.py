@@ -1640,6 +1640,9 @@ def validate_topic(topic: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 def run_step_search(topic: str) -> str:
+    print("\n" + "="*50)
+    print("STEP 1 - search agent working ...")
+    print("="*50)
     agent = build_search_agent()
     result = agent.invoke({
         "messages": [(
@@ -1648,10 +1651,15 @@ def run_step_search(topic: str) -> str:
             "using the web search tool and return the info in structured format."
         )]
     })
-    return result["messages"][-1].content
+    content = result["messages"][-1].content
+    print(f"\n search result: {content}\n")
+    return content
 
 
 def run_step_reader(topic: str, search_results: str) -> str:
+    print("\n" + "="*50)
+    print("STEP 2 - reader agent is scraping top resources ...")
+    print("="*50)
     agent = build_reader_agent()
     result = agent.invoke({
         "messages": [(
@@ -1661,19 +1669,31 @@ def run_step_reader(topic: str, search_results: str) -> str:
             f"Search Results:\n{search_results[:800]}"
         )]
     })
-    return result["messages"][-1].content
+    content = result["messages"][-1].content
+    print(f"\n scraped content: {content}\n")
+    return content
 
 
 def run_step_writer(topic: str, search_results: str, scraped_content: str) -> str:
+    print("\n" + "="*50)
+    print("STEP 3 - writer is drafting the report ...")
+    print("="*50)
     combined = (
         f"SEARCH RESULTS:\n{search_results}\n\n"
         f"DETAILED SCRAPED CONTENT:\n{scraped_content}\n\n"
     )
-    return writer_chain.invoke({"topic": topic, "research": combined})
+    report = writer_chain.invoke({"topic": topic, "research": combined})
+    print(f"\n Final report: {report}\n")
+    return report
 
 
 def run_step_critic(report: str) -> str:
-    return critic_chain.invoke({"report": report})
+    print("\n" + "="*50)
+    print("STEP 4 - critic is evaluating the report ...")
+    print("="*50)
+    feedback = critic_chain.invoke({"report": report})
+    print(f"\n Critic's review: {feedback}\n")
+    return feedback
 
 
 # ---------------------------------------------------------------------------
