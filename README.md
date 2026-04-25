@@ -69,6 +69,4 @@ streamlit run app.py
 - `agents.py`: Contains the LangChain setups, chains, and LLM initializations for the various specialized agents (Search, Reader, Writer, Critic).
 - `pipeline.py` / `tools.py` *(if applicable)*: Custom utilities and pipeline handling logic used by the agents.
 
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+Thank You for visiting ❤️
