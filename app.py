@@ -1363,6 +1363,19 @@ print("new code")
 
 import traceback
 import streamlit as st
+import os
+
+# --- SECRET SYNC FOR STREAMLIT CLOUD ---
+# Ensure secrets entered in the Streamlit Cloud dashboard are pushed into the OS environment 
+# so that Langchain (OpenAI) and TavilyClient can detect them upon module import.
+try:
+    for k, v in st.secrets.items():
+        if type(v) is str or type(v) is int or type(v) is float:
+            os.environ[str(k)] = str(v)
+except Exception:
+    pass
+# ---------------------------------------
+
 from agents import build_search_agent, build_reader_agent, writer_chain, critic_chain
 
 # ---------------------------------------------------------------------------
