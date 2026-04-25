@@ -68,7 +68,23 @@ streamlit run app.py
 - `app.py`: The Main Streamlit application containing all frontend UI, CSS, and pipeline coordination logic.
 - `agents.py`: Contains the LangChain setups, chains, and LLM initializations for the various specialized agents (Search, Reader, Writer, Critic).
 - `pipeline.py` / `tools.py` *(if applicable)*: Custom utilities and pipeline handling logic used by the agents.
+## Image 1
+<img src="https://github.com/user-attachments/assets/ab4a791b-96e3-469e-aff6-cd8e1dd6ef5b" width="600"/>
 
+---
+
+## Image 2
+<img src="https://github.com/user-attachments/assets/ab92ec5d-832a-4cc0-8699-d425944df9e8" width="600"/>
+
+---
+
+## Image 3
+<img src="https://github.com/user-attachments/assets/7da9a59f-b706-48c8-9c05-6a945ab845a0" width="600"/>
+
+---
+
+## Image 4
+<img src="https://github.com/user-attachments/assets/4ac2e3ac-dc58-4be6-a117-d9ec415dcc03" width="600"/>
 <br>
 <div align="center">
   <h3>Thank You for visiting ❤️</h3>
