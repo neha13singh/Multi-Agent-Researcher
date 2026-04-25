@@ -1948,16 +1948,22 @@ def render_top_action_bar(topic: str, pipeline_state: dict) -> None:
     div[data-testid="column"]:nth-child(1) button[kind="secondary"] {{
         background: {report_bg} !important; color: {report_color} !important; border: {report_border} !important; border-radius: 12px; font-weight: 700; width: 100%; transition: all 0.3s;
     }}
+    div[data-testid="column"]:nth-child(1) button[kind="secondary"] p,
+    div[data-testid="column"]:nth-child(1) button[kind="secondary"] span {{ color: {report_color} !important; }}
     div[data-testid="column"]:nth-child(1) button[kind="secondary"]:hover {{ background: {report_hover} !important; transform: translateY(-2px); }}
 
     div[data-testid="column"]:nth-child(2) button[kind="secondary"] {{
         background: {feedback_bg} !important; color: {feedback_color} !important; border: {feedback_border} !important; border-radius: 12px; font-weight: 700; width: 100%; transition: all 0.3s;
     }}
+    div[data-testid="column"]:nth-child(2) button[kind="secondary"] p,
+    div[data-testid="column"]:nth-child(2) button[kind="secondary"] span {{ color: {feedback_color} !important; }}
     div[data-testid="column"]:nth-child(2) button[kind="secondary"]:hover {{ background: {feedback_hover} !important; transform: translateY(-2px); }}
 
     div[data-testid="column"]:nth-child(3) button[kind="secondary"] {{
         background: {dl_bg} !important; color: {dl_color} !important; border: {dl_border} !important; border-radius: 12px; font-weight: 700; width: 100%; transition: all 0.3s;
     }}
+    div[data-testid="column"]:nth-child(3) button[kind="secondary"] p,
+    div[data-testid="column"]:nth-child(3) button[kind="secondary"] span {{ color: {dl_color} !important; }}
     div[data-testid="column"]:nth-child(3) button[kind="secondary"]:hover {{ background: {dl_hover} !important; transform: translateY(-2px); }}
     </style>
     ''', unsafe_allow_html=True)
