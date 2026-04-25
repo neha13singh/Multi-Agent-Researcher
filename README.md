@@ -2,13 +2,19 @@
 
 AI Research Pipeline is a multi-agent system built with **Streamlit** and **LangChain** that automatically researches, scrapes, and generates comprehensive reports on any given topic. Watch the agents intelligently search the web, read extensive source contents, draft a high-quality report, and finally critique their own work—all live in a beautiful UI!
 
-## 🚀 Features
+## 🤖 Agents & Tools Architecture
 
-- **Live Multi-Agent Pipeline:** Watch each step of the pipeline execute in real-time.
-- **Search Agent:** Autonomously searches the web to find the most relevant sources for your topic.
-- **Reader / Scraper:** Extracts and parses deep content from the selected web pages.
-- **Writer Agent:** Synthesizes the parsed information into a highly detailed, structured final report.
-- **Critic Agent:** Reviews the generated report to provide a secondary layer of feedback, highlighting potential gaps and improvements.
+The heart of the system relies on specialized LangChain agents powered by OpenAI's `gpt-4o-mini`, utilizing custom tools to gather and process information accurately.
+
+### The Agents & Chains
+- **Search Agent (`build_search_agent`)**: An autonomous agent designated to accept an open-ended topic and use its tool-calling capabilities to perform live web queries.
+- **Reader Agent (`build_reader_agent`)**: Evaluates the output of the Search Agent, picks the most promising/relevant URL, and scrapes its deep content for synthesis.
+- **Writer Chain (`writer_chain`)**: A structured LCEL (LangChain Expression Language) pipeline that prompts the LLM to act as an expert research writer. It formats the raw scraped content into a professional report with Key Findings and Sources.
+- **Critic Chain (`critic_chain`)**: A strict evaluation LCEL pipeline that reviews the Writer Chain's output. It grades the report out of 10 and provides actionable Strengths, Areas to Improve, and a One-line verdict.
+
+### The Tools
+- **`web_search` Tool**: Integrates directly with the `TavilyClient`. This allows the AI to programmatically fetch the top 5 most recent and reliable web results, cleanly returning the Titles, URLs, and Snippets.
+- **`scrape_url` Tool**: Uses the `requests` library and `BeautifulSoup4` to deep-scrape full HTML pages. It is equipped to filter out junk tags (like scripts, navbars, and footers) to feed only clean, structured text back to the LLM context window (up to 3000 characters).
 - **Beautiful UI:** Built with a fully custom, modern Streamlit dark/light theme, featuring dynamic progress tracking, responsive elements, and clean file downloads.
 - **Downloadable Outputs:** Easily download the generated report and critiques as a text file for your records.
 

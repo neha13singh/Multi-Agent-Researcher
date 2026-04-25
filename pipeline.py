@@ -1,12 +1,10 @@
 from agents import build_search_agent, build_reader_agent, writer_chain, critic_chain
 from tools import web_search, scrape_url
 
-def run_research_pipeline(topic:str):
+def run_research_pipeline(topic:str)->dict:
     #create state which will be accessible to all agents and chains
     state={}
-    
     #step 1
-    yield "start", 0, state
     #search agent working 
     print("\n"+"="*50)
     print("STEP 1 - search agent working ...")
@@ -18,10 +16,8 @@ def run_research_pipeline(topic:str):
     })
     state["search_results"]=search_result['messages'][-1].content
     print ("\n search result ",state['search_results'])
-    yield "end", 0, state
 
-    #step 2
-    yield "start", 1, state
+    #step2
     #reader agent working
     print("\n"+"="*50)
     print("STEP 2 - reader agent is scraping top resources ...")
@@ -39,10 +35,8 @@ def run_research_pipeline(topic:str):
     })
     state["scraped_content"]=reader_results['messages'][-1].content
     print("scraped content \n",state['scraped_content'])
-    yield "end", 1, state
 
-    #step 3
-    yield "start", 2, state
+    #step3
     #writer chain working
     print("\n"+"="*50)
     print("STEP 3 - writer is drafting the report ...")
@@ -59,10 +53,7 @@ def run_research_pipeline(topic:str):
         }
     )
     print("\n Final report \n",state['report'])
-    yield "end", 2, state
-
-    #step 4
-    yield "start", 3, state
+    #step4
     #critic Report
     print("\n"+"="*50)
     print("STEP 4- critic is evaluating the report ...")
@@ -73,16 +64,18 @@ def run_research_pipeline(topic:str):
         }
     )
     print("\n Critic's review \n",state['feedback'])
-    yield "end", 3, state
+
+    return state
 
 
 if __name__=="__main__":
     topic=input("Enter the research topic: ")
+    run_research_pipeline(topic)
     
-    print(f"\n🚀 Starting Live Research Pipeline for: '{topic}'")
-    for event_type, step_num, current_state in run_research_pipeline(topic):
-        # The generator already prints its own progress logs.
-        # We simply exhaust the generator to keep the CLI interactive.
-        pass
-    
-    print("\n✅ Pipeline completed successfully.")
+
+
+
+
+
+
+
